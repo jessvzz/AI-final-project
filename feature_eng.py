@@ -2,11 +2,18 @@
 
 from datetime import datetime, date, timedelta
 import pandas as pd
-import plotly.express as px
 import ta
 import numpy as np
 import statistics
 from ta.momentum import RSIIndicator
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error
+
+
+
 
 #to change with the desired dataset
 df = pd.read_csv("AAPL.csv")
@@ -157,6 +164,9 @@ print("The daily volatility  is: {:.2%}".format(DailyVolatility))
 AnnualizedDailyVolatilityCalendarDays = DailyVolatility*np.sqrt(365)
 print("The annualized daily volatility measured in calendar days is: {:.2%}".format(AnnualizedDailyVolatilityCalendarDays))
 
+df = df.drop('Daily Return', axis=1)
+df = df.drop('Price relative', axis=1)
+
 """
 MOVING AVERAGE CONVERGENCE-DIVERGENCE
 """
@@ -168,5 +178,54 @@ df['macd'] = df['ema_12'] - df['ema_26']
 df.drop('ema_12', axis=1, inplace=True)
 df.drop('ema_26', axis=1, inplace=True)
 
-print(df.head())
 
+"""
+
+--- FEATURES SELECTION ---
+
+df = df.dropna()
+
+features = df.columns.tolist()
+features.remove('Close')
+features.remove('Date')
+
+x = df[features]
+y = df['Close']
+
+model = RandomForestRegressor()
+
+model.fit(x, y)
+feature_importance = model.feature_importances_
+
+feature_importance_df = pd.DataFrame({'Feature': features, 'Importance': feature_importance})
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
+
+print(feature_importance_df)
+"""
+"""
+
+--- SPLITTING THE DATASET --- 
+
+"""
+df['Date'] = pd.to_datetime(df['Date'])
+df = df.dropna()
+df.set_index('Date', inplace = True)
+
+X = df.drop('Close', axis=1)
+Y = df['Close']
+
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.2, random_state = 42)
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size = 0.2, random_state = 42)
+
+
+models = {
+    'Linear Regression': LinearRegression(),
+    'Random Forest': RandomForestRegressor(),
+    'Support Vector Machine': SVR()
+}
+
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    print(f"{name} - MSE: {mse}")
