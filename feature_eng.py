@@ -146,7 +146,7 @@ for i in range(1, len(df.Date)):
 #calculating proportional change in stock price between a day and the dau before
 df['Daily Return'] = ""
 for i in range(1, len(df.Date)):
-    df.loc['Daily Return'][i] = np.log(df['Close'][i]/df['Close'][i-1])
+    df.loc[i, 'Daily Return'] = np.log(df['Close'][i] / df['Close'][i - 1])
 
 #daily volatility
 DailyVolatility = statistics.stdev(df['Daily Return'][1:])
