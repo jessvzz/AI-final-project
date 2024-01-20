@@ -229,3 +229,4 @@ for name, model in models.items():
     y_pred = model.predict(X_test)
     mse = mean_squared_error(y_test, y_pred)
     print(f"{name} - MSE: {mse}")
+  
