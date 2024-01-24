@@ -9,8 +9,13 @@ from ta.momentum import RSIIndicator
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.model_selection import cross_val_score
+
+
 
 
 
@@ -221,12 +226,40 @@ X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size = 
 models = {
     'Linear Regression': LinearRegression(),
     'Random Forest': RandomForestRegressor(),
+    'Gradient Boosting': GradientBoostingRegressor(),
     'Support Vector Machine': SVR()
 }
 
+model = None
+best_mse = float('inf')
+
+for name, possible_model in models.items():
+    possible_model.fit(X_train, y_train)
+    y_pred = possible_model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    print(f"{name} - MSE: {mse}")
+
+    if mse < best_mse:
+        best_mse = mse
+        model = possible_model
+
+
+model.fit(X, Y)
+
+#valuta prestazioni del modello:
 for name, model in models.items():
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
+
     mse = mean_squared_error(y_test, y_pred)
-    print(f"{name} - MSE: {mse}")
-  
+    r2 = r2_score(y_test, y_pred)
+    std_residual = np.sqrt(mse)
+
+    print(f"{name} - MSE: {mse}, R²: {r2}, Deviazione Standard Residua: {std_residual}")
+
+
+#cross_validation
+cross_val_scores = cross_val_score(model, X, Y, cv=5, scoring='neg_mean_squared_error')
+avg_cross_val_mse = -cross_val_scores.mean()
+
+print(f"Media MSE con validazione incrociata: {avg_cross_val_mse}")
