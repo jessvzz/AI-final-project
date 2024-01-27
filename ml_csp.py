@@ -14,7 +14,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import cross_val_score
-
+from CSP_generics import Variable, Constraint, CSP
 
 
 
@@ -138,30 +138,7 @@ def feature_eng(ds_name):
     """
     df['CCI'] = (df['TP'] - df['sma']) / (0.015 * df['mad'])
 
-    """
-    VOLATILITY
-    """
-    # calculating relative price: proportional change in stock price between a day and the dau before
-    df['Price relative'] = ""
-    for i in range(1, len(df.Date)):
-        df.loc[i, 'Price relative'] = df['Close'][i] / df['Close'][i - 1]
 
-    # calculating proportional change in stock price between a day and the dau before
-    df['Daily Return'] = ""
-    for i in range(1, len(df.Date)):
-        df.loc[i, 'Daily Return'] = np.log(df['Close'][i] / df['Close'][i - 1])
-
-    # daily volatility
-    DailyVolatility = statistics.stdev(df['Daily Return'][1:])
-    print("The daily volatility  is: {:.2%}".format(DailyVolatility))
-
-    # annulized daily voltility
-    AnnualizedDailyVolatilityCalendarDays = DailyVolatility * np.sqrt(365)
-    print("The annualized daily volatility measured in calendar days is: {:.2%}".format(
-        AnnualizedDailyVolatilityCalendarDays))
-
-    df = df.drop('Daily Return', axis=1)
-    df = df.drop('Price relative', axis=1)
 
     """
     MOVING AVERAGE CONVERGENCE-DIVERGENCE
@@ -199,6 +176,32 @@ feature_importance_df = feature_importance_df.sort_values(by='Importance', ascen
 
 print(feature_importance_df)
 """
+
+
+def calculate_volatility(df):
+    # calculating relative price: proportional change in stock price between a day and the dau before
+    df['Price relative'] = ""
+    for i in range(1, len(df.Date)):
+        df.loc[i, 'Price relative'] = df['Close'][i] / df['Close'][i - 1]
+
+    # calculating proportional change in stock price between a day and the dau before
+    df['Daily Return'] = ""
+    for i in range(1, len(df.Date)):
+        df.loc[i, 'Daily Return'] = np.log(df['Close'][i] / df['Close'][i - 1])
+
+    # daily volatility
+    DailyVolatility = statistics.stdev(df['Daily Return'][1:])
+    print("The daily volatility  is: {:.2%}".format(DailyVolatility))
+
+    # annulized daily voltility
+    AnnualizedDailyVolatilityCalendarDays = DailyVolatility * np.sqrt(365)
+    print("The annualized daily volatility measured in calendar days is: {:.2%}".format(
+        AnnualizedDailyVolatilityCalendarDays))
+
+    df = df.drop('Daily Return', axis=1)
+    df = df.drop('Price relative', axis=1)
+    return AnnualizedDailyVolatilityCalendarDays
+
 """
 
 --- SPLITTING THE DATASET --- 
@@ -256,4 +259,33 @@ def modelling(dataset_string):
     avg_cross_val_mse = -cross_val_scores.mean()
 
     print(f"Media MSE con validazione incrociata: {avg_cross_val_mse}")
+
+    def build_portfolio_csp( min_investment, max_investment, risk_factor, min_expected_return):
+        domain = np.arange(0, max_investment + 0.01, 0.01)
+
+        AAPL = Variable('AAPL.csv', domain)
+        AMZN = Variable('AMZN.csv', domain)
+        STBKS = Variable('STBKS.csv', domain)
+        # [...]
+        variables = [AAPL, AMZN, STBKS] #...
+
+        constraints = []
+
+        constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) <= max_investment))
+        constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) >= min_investment))
+
+        return CSP("Portfolio Optimization", variables, constraints)
+
+
+    """
+    TODO's: 
+    - add volatility constraint
+        - define a function to calulate portfolio volatility 
+    
+    -add min return constraint
+        - define a function to calculate portfolio min retrun
+    
+    """
+
+
 
