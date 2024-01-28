@@ -178,29 +178,6 @@ print(feature_importance_df)
 """
 
 
-def calculate_volatility(df):
-    # calculating relative price: proportional change in stock price between a day and the dau before
-    df['Price relative'] = ""
-    for i in range(1, len(df.Date)):
-        df.loc[i, 'Price relative'] = df['Close'][i] / df['Close'][i - 1]
-
-    # calculating proportional change in stock price between a day and the dau before
-    df['Daily Return'] = ""
-    for i in range(1, len(df.Date)):
-        df.loc[i, 'Daily Return'] = np.log(df['Close'][i] / df['Close'][i - 1])
-
-    # daily volatility
-    DailyVolatility = statistics.stdev(df['Daily Return'][1:])
-    print("The daily volatility  is: {:.2%}".format(DailyVolatility))
-
-    # annulized daily voltility
-    AnnualizedDailyVolatilityCalendarDays = DailyVolatility * np.sqrt(365)
-    print("The annualized daily volatility measured in calendar days is: {:.2%}".format(
-        AnnualizedDailyVolatilityCalendarDays))
-
-    df = df.drop('Daily Return', axis=1)
-    df = df.drop('Price relative', axis=1)
-    return AnnualizedDailyVolatilityCalendarDays
 
 """
 
@@ -260,31 +237,65 @@ def modelling(dataset_string):
 
     print(f"Media MSE con validazione incrociata: {avg_cross_val_mse}")
 
-    def build_portfolio_csp( min_investment, max_investment, risk_factor, min_expected_return):
-        domain = np.arange(0, max_investment + 0.01, 0.01)
+def calculate_volatility(ds_name):
+        df = pd.read_csv(ds_name)
+        # calculating relative price: proportional change in stock price between a day and the dau before
+        df['Price relative'] = ""
+        for i in range(1, len(df.Date)):
+            df.loc[i, 'Price relative'] = df['Close'][i] / df['Close'][i - 1]
 
-        AAPL = Variable('AAPL.csv', domain)
-        AMZN = Variable('AMZN.csv', domain)
-        STBKS = Variable('STBKS.csv', domain)
-        # [...]
-        variables = [AAPL, AMZN, STBKS] #...
+        # calculating proportional change in stock price between a day and the dau before
+        df['Daily Return'] = ""
+        for i in range(1, len(df.Date)):
+            df.loc[i, 'Daily Return'] = np.log(df['Close'][i] / df['Close'][i - 1])
 
-        constraints = []
+        # daily volatility
+        DailyVolatility = statistics.stdev(df['Daily Return'][1:])
+        print("The daily volatility  is: {:.2%}".format(DailyVolatility))
 
-        constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) <= max_investment))
-        constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) >= min_investment))
+        # annulized daily voltility
+        AnnualizedDailyVolatilityCalendarDays = DailyVolatility * np.sqrt(365)
+        print("The annualized daily volatility measured in calendar days is: {:.2%}".format(
+            AnnualizedDailyVolatilityCalendarDays))
 
-        return CSP("Portfolio Optimization", variables, constraints)
+        df = df.drop('Daily Return', axis=1)
+        df = df.drop('Price relative', axis=1)
+        return AnnualizedDailyVolatilityCalendarDays
+
+def build_portfolio_csp( min_investment, max_investment, risk_factor, min_expected_return):
+    domain = np.arange(0, max_investment + 0.01, 0.01)
+
+    aapl = Variable('AAPL.csv', domain)
+    amzn = Variable('AMZN.csv', domain)
+    stbuks = Variable('STBKS.csv', domain)
+    # [...]
+    variables = [aapl, amzn, stbuks] #...
+
+    def calculate_portfolio_volatility(*values):
+        var_values = dict(zip(variables, values))
+
+        file_names = [var_values[var] for var in variables]
+
+        total_volatility = sum(calculate_volatility(file_name) for file_name in file_names)
+
+        return total_volatility
+
+    constraints = []
+
+    constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) <= max_investment))
+    constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) >= min_investment))
+    constraints.append(Constraint(scope=variables,
+                                      condition=lambda *values: calculate_portfolio_volatility(*values) <= risk_factor))
+
+    return CSP("Portfolio Optimization", variables, constraints)
 
 
     """
     TODO's: 
-    - add volatility constraint
-        - define a function to calulate portfolio volatility 
     
     -add min return constraint
         - define a function to calculate portfolio min retrun
-    
+    -revise volatility contraints
     """
 
 
