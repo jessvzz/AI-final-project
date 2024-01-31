@@ -264,11 +264,12 @@ def calculate_volatility(ds_name):
 
 def build_portfolio_csp( min_investment, max_investment, risk_factor, min_expected_return):
     domain = np.arange(0, max_investment + 0.01, 0.01)
-
+    max_for_each = max_investment / 3
     aapl = Variable('AAPL.csv', domain)
     amzn = Variable('AMZN.csv', domain)
     stbuks = Variable('STBKS.csv', domain)
     # [...]
+    
     variables = [aapl, amzn, stbuks] #...
 
     def calculate_portfolio_volatility(*values):
@@ -280,21 +281,47 @@ def build_portfolio_csp( min_investment, max_investment, risk_factor, min_expect
 
         return total_volatility
 
+    def calculate_min_return(*values):
+        y_train = []
+        y_test = []
+        err=[]
+        var_values = dict(zip(variables, values))
+        filenames = [var_values[var] for var in variables]
+        for file in filenames :
+            df = pd.read_csv(file)
+            df = df.dropna()
+            df['Date'] = pd.to_datetime(df['Date'])
+            df = df.set_index('Date')
+            df = df.dropna()
+            
+            #splitting the dataset
+            X = df.drop('Close', axis=1)
+            Y = df['Close']
+            X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+            X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
+            last_value_test = y_test[-1]
+            last_value_train = y_train[-1]
+            
+            err.append((last_value_test - last_value_train)*(values[filenames.index(file)]/last_value_test))
+        err_value=sum(err)
+        return err_value
+
     constraints = []
 
     constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) <= max_investment))
     constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) >= min_investment))
-    constraints.append(Constraint(scope=variables,
-                                      condition=lambda *values: calculate_portfolio_volatility(*values) <= risk_factor))
-
+    constraints.append(Constraint(scope=variables,condition=lambda *values: calculate_portfolio_volatility(*values) <= risk_factor))
+    constraints.append(Constraint(scope=variables, condition=lambda *values: calculate_min_return(*values) >= min_expected_return))
+    constraints.append(Constraint(scope=variables, condition=lambda *values: all(value >= 0 and value <= max_for_each for value in values)))
     return CSP("Portfolio Optimization", variables, constraints)
 
 
     """
     TODO's: 
     
-    -add min return constraint
-        - define a function to calculate portfolio min retrun
+    x add min return constraint
+        x define a function to calculate portfolio min retrun
     -revise volatility contraints
     """
 
