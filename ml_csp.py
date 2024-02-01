@@ -15,7 +15,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import cross_val_score
 from CSP_generics import Variable, Constraint, CSP
-
+from CSP_solver import Arc_Consistency
+import pickle
 
 
 def data_preparation(dataset_name):
@@ -206,36 +207,45 @@ def choose_model(X_train, y_train, X_test, y_test):
             model = possible_model
     return model
 
-def modelling(dataset_string):
-    df = feature_eng(dataset_string)
-    df['Date'] = pd.to_datetime(df['Date'])
-    df = df.dropna()
-    df.set_index('Date', inplace=True)
+def modelling():
+    datasets = ["AAPL.csv", "AMZN.csv"] #...
+    for dataset in datasets:
+        df = feature_eng(dataset)
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.dropna()
+        df.set_index('Date', inplace=True)
 
-    X = df.drop('Close', axis=1)
-    Y = df['Close']
+        X = df.drop('Close', axis=1)
+        Y = df['Close']
 
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
-    model = choose_model(X_train, y_train, X_test, y_test)
+        model = choose_model(X_train, y_train, X_test, y_test)
 
-    model.fit(X, Y)
+        model.fit(X, Y)
+
+        """
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        mse = mean_squared_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+        std_residual = np.sqrt(mse)
+
+        print(f"MSE: {mse}, R²: {r2}, Deviazione Standard Residua: {std_residual}")
+
+        # cross_validation
+        cross_val_scores = cross_val_score(model, X, Y, cv=5, scoring='neg_mean_squared_error')
+        avg_cross_val_mse = -cross_val_scores.mean()
+
+        print(f"Media MSE con validazione incrociata: {avg_cross_val_mse}")
+        """
+        with open(f'models/model_{dataset}.pkl', 'wb') as file:
+            pickle.dump(model, file)
+
+        print(f"Saved and trained model for {dataset}!")
 
 
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    mse = mean_squared_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-    std_residual = np.sqrt(mse)
-
-    print(f"MSE: {mse}, R²: {r2}, Deviazione Standard Residua: {std_residual}")
-
-    # cross_validation
-    cross_val_scores = cross_val_score(model, X, Y, cv=5, scoring='neg_mean_squared_error')
-    avg_cross_val_mse = -cross_val_scores.mean()
-
-    print(f"Media MSE con validazione incrociata: {avg_cross_val_mse}")
 
 def calculate_volatility(ds_name):
         df = pd.read_csv(ds_name)
@@ -316,13 +326,38 @@ def build_portfolio_csp( min_investment, max_investment, risk_factor, min_expect
     constraints.append(Constraint(scope=variables, condition=lambda *values: all(value >= 0 and value <= max_for_each for value in values)))
     return CSP("Portfolio Optimization", variables, constraints)
 
+def csp_solver(csp):
+    arc_solver = Arc_Consistency(csp)
+
+    all_solutions = arc_solver.solve_all_wrapper()
+    """"
+    for solution in all_solutions:
+        print("Solution:", solution)
+    """
+    return all_solutions
+
+def load_model(dataset):
+    model_path = f'models/model_{dataset}.pkl'
+    try:
+        with open(model_path, 'rb') as file:
+            loaded_model = pickle.load(file)
+        print(f"{dataset} model uploaded.")
+        return loaded_model
+    except FileNotFoundError:
+        print(f"{dataset} model not found")
+        return None
+
+def main(model):
+
+
 
     """
     TODO's: 
     
     x add min return constraint
         x define a function to calculate portfolio min retrun
-    -revise volatility contraints
+
+    modelling take out dataset string and put in datasets
     """
 
 

@@ -105,6 +105,39 @@ class Arc_Consistency(Displayable):
                 self.display(3, " adding", to_do if to_do else "nothing", "to to_do.")
                 return self.solve_one(new_doms1, to_do) or self.solve_one(new_doms2, to_do)
 
+    def solve_all(self, domains=None, to_do=None, solutions=None):
+        """Restituisce tutte le soluzioni al CSP o una lista vuota se non ce ne sono.
+        to_do è l'elenco degli archi da verificare.
+        solutions è la lista di soluzioni trovate fino a quel momento.
+        """
+        if solutions is None:
+            solutions = []
+
+        new_domains = self.make_arc_consistent(domains, to_do)
+        if any(len(new_domains[var]) == 0 for var in new_domains):
+            return solutions
+        elif all(len(new_domains[var]) == 1 for var in new_domains):
+            solution = {var: select(new_domains[var]) for var in new_domains}
+            self.display(2, "solution:", solution)
+            solutions.append(solution)
+        else:
+            var = self.select_var(x for x in self.csp.variables if len(new_domains[x]) > 1)
+            if var:
+                dom1, dom2 = partition_domain(new_domains[var])
+                self.display(3, "...splitting", var, "into", dom1, "and", dom2)
+                new_doms1 = copy_with_assign(new_domains, var, dom1)
+                new_doms2 = copy_with_assign(new_domains, var, dom2)
+                to_do = self.new_to_do(var, None)
+                self.display(3, " adding", to_do if to_do else "nothing", "to to_do.")
+                self.solve_all(new_doms1, to_do, solutions)
+                self.solve_all(new_doms2, to_do, solutions)
+
+        return solutions
+
+    def solve_all_wrapper(self):
+        """Wrapper method to call solve_all with the initial state of the CSP."""
+        return self.solve_all(self.csp.initial_domains)
+
     def select_var(self, iter_vars):
         """return the next variable to split"""
         return select(iter_vars)
