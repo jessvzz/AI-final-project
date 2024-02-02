@@ -2,6 +2,7 @@
 from CSP_generics import Displayable
 from CSP_generics import Search_problem
 from CSP_generics import Arc
+import numpy as np
 
 class Arc_Consistency(Displayable):
     """Solves a CSP with arc consistency and domain splitting
@@ -36,7 +37,7 @@ class Arc_Consistency(Displayable):
             other_vars = [ov for ov in const.scope if ov != var]
             new_domain = {val for val in domains[var]
                             if self.any_holds(domains, const, {var: val}, other_vars)}
-            if new_domain != domains[var]:
+            if not np.array_equal(new_domain, domains[var]):
                 self.display(4, "Arc: (", var, ",", const, ") is inconsistent")
                 self.display(3, "Domain pruned", "dom(", var, ") =", new_domain,
                                  " due to ", const)
@@ -135,8 +136,8 @@ class Arc_Consistency(Displayable):
         return solutions
 
     def solve_all_wrapper(self):
-        """Wrapper method to call solve_all with the initial state of the CSP."""
-        return self.solve_all(self.csp.initial_domains)
+        initial_domains = {var: var.domain for var in self.csp.variables}
+        return self.solve_all(initial_domains)
 
     def select_var(self, iter_vars):
         """return the next variable to split"""

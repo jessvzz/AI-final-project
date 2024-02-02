@@ -273,11 +273,11 @@ def calculate_volatility(ds_name):
         return AnnualizedDailyVolatilityCalendarDays
 
 def build_portfolio_csp( min_investment, max_investment, risk_factor, min_expected_return):
-    domain = np.arange(0, max_investment + 0.01, 0.01)
+    domain = np.arange(0, max_investment + 1, 0.01)
     max_for_each = max_investment / 3
     aapl = Variable('AAPL.csv', domain)
     amzn = Variable('AMZN.csv', domain)
-    stbuks = Variable('STBKS.csv', domain)
+    stbuks = Variable('SBUX.csv', domain)
     # [...]
     
     variables = [aapl, amzn, stbuks] #...
@@ -290,7 +290,7 @@ def build_portfolio_csp( min_investment, max_investment, risk_factor, min_expect
         total_volatility = sum(calculate_volatility(file_name) for file_name in file_names)
 
         return total_volatility
-
+    """
     def calculate_min_return(*values):
         y_train = []
         y_test = []
@@ -316,14 +316,15 @@ def build_portfolio_csp( min_investment, max_investment, risk_factor, min_expect
             err.append((last_value_test - last_value_train)*(values[filenames.index(file)]/last_value_test))
         err_value=sum(err)
         return err_value
+    """
 
     constraints = []
 
     constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) <= max_investment))
     constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) >= min_investment))
     constraints.append(Constraint(scope=variables,condition=lambda *values: calculate_portfolio_volatility(*values) <= risk_factor))
-    constraints.append(Constraint(scope=variables, condition=lambda *values: calculate_min_return(*values) >= min_expected_return))
-    constraints.append(Constraint(scope=variables, condition=lambda *values: all(value >= 0 and value <= max_for_each for value in values)))
+    #constraints.append(Constraint(scope=variables, condition=lambda *values: calculate_min_return(*values) >= min_expected_return))
+    #constraints.append(Constraint(scope=variables, condition=lambda *values: all(value >= 0 and value <= max_for_each for value in values)))
     return CSP("Portfolio Optimization", variables, constraints)
 
 def csp_solver(csp):
@@ -347,7 +348,12 @@ def load_model(dataset):
         print(f"{dataset} model not found")
         return None
 
-def main(model):
+def main():
+    csp = build_portfolio_csp(0, 60, 0.9)
+    solutions = csp_solver(csp)
+    for solution in solutions:
+        print("Solution: ", solution)
+
 
 
 
@@ -360,5 +366,5 @@ def main(model):
     modelling take out dataset string and put in datasets
     """
 
-
+main()
 
