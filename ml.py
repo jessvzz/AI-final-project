@@ -1,19 +1,14 @@
 from datetime import datetime, date, timedelta
 import pandas as pd
 import ta
-import numpy as np
-import statistics
 from ta.momentum import RSIIndicator
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.svm import SVR
-from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import cross_val_score
-from CSP_generics import Variable, Constraint, CSP
-from CSP_solver import Arc_Consistency
 import pickle
 import os
 

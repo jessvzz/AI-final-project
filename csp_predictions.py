@@ -1,46 +1,17 @@
-from datetime import datetime, date, timedelta
+from datetime import timedelta
 import pandas as pd
-import ta
 import numpy as np
 import statistics
-from ta.momentum import RSIIndicator
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.svm import SVR
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.model_selection import cross_val_score
 from CSP_generics import Variable, Constraint, CSP
 from CSP_solver import Arc_Consistency
 import pickle
 import os
+from ml import feature_eng
+from ml import data_preparation
 
-def data_preparation(dataset_name):
-    df = pd.read_csv(dataset_name)
-
-    """
-    ------ Data preparation ------
-    """
-
-    # converting dates in yyyy-mm-dd format
-    df['Date'] = pd.to_datetime(df['Date'])
-
-    # renamed the column for a pure personal preference
-    df.rename(columns={'Close/Last': 'Close'}, inplace=True)
-
-    # converted to purely numeric values
-    df['Close'] = df['Close'].replace('[\$,]', '', regex=True).astype(float)
-    df['Open'] = df['Open'].replace('[\$,]', '', regex=True).astype(float)
-    df['High'] = df['High'].replace('[\$,]', '', regex=True).astype(float)
-    df['Low'] = df['Low'].replace('[\$,]', '', regex=True).astype(float)
-
-    df = df.ffill()
-    return df
 
 def calculate_volatility():
-    datasets = ['AAPL.csv', 'AMZN.csv', 'SBUX.csv']
+    datasets = ['AAPL.csv', 'AMZN.csv']
     volatilities = {}
     for dataset in datasets:
         df = data_preparation(dataset)
@@ -74,10 +45,9 @@ def build_portfolio_csp(min_investment, max_investment, risk_factor, min_expecte
     max_for_each = max_investment / 3
     aapl = Variable('AAPL.csv', domain)
     amzn = Variable('AMZN.csv', domain)
-    stbuks = Variable('SBUX.csv', domain)
     # [...]
 
-    variables = [aapl, amzn, stbuks]  # ...
+    variables = [aapl, amzn]  # ...
 
     def calculate_portfolio_volatility(*values):
         #asset_volatilities = calculate_volatility()
@@ -164,30 +134,64 @@ def load_model(dataset_name):
 
 def main():
     dataset_names = ["AAPL", "AMZN"]
+    prediction_data = {}
+    last_y_train_values = {}
 
     for dataset_name in dataset_names:
-        loaded_model = load_model(dataset_name)
+        model = load_model(dataset_name)
 
-        if loaded_model is not None:
+        if model is not None:
             print(f"Model loaded successfully for {dataset_name}")
         else:
             print(f"Failed to load model for {dataset_name}")
+        dataset = dataset_name+'.csv'
+        df = feature_eng(dataset)
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.dropna()
+        df.set_index('Date', inplace=True)
+
+        split_date = df.index.max() - timedelta(days=365)
+
+        train = df[df.index <= split_date]
+        test = df[df.index > split_date]
+
+        # Separazione delle variabili indipendenti (X) dalle dipendenti (Y)
+        X_train = train.drop('Close', axis=1)
+        y_train = train['Close']
+        X_test = test.drop('Close', axis=1)
+        last_y_train_values[dataset] = y_train.iloc[-1]
 
 
+        # Effettua le previsioni sul set di test (dati futuri)
+        y_pred = model.predict(X_test)
+        prediction = y_pred[-1]
+        prediction_data[dataset] = prediction
 
 
-
-
-"""
-   csp = build_portfolio_csp(50, 60, 0.45, 0)
+    csp = build_portfolio_csp(50, 60, 0.45, 0)
     solutions = csp_solver(csp)
+    best_return = 0
+    best_solution = None
     for solution in solutions:
-        print("Solution: ", solution)
-"""
+        total_return = 0
+
+        for variable, allocation in solution.items():
+            dataset_name = variable.name
+            prediction = prediction_data[dataset_name]
+            last_asset_value = last_y_train_values[dataset_name]
+            expected_return = prediction * (allocation / last_asset_value)
+
+            total_return += expected_return
+        if total_return > best_return:
+            best_return = total_return
+            best_solution = solution
+
+    best_solution_str = {key: round(value, 2) for key, value in best_solution.items()}
+    print(str(best_solution_str) + '. Expected return: ' + str(best_return))
 
 
 main()
-calculate_volatility()
+
 """
 TODO'S
 make domains and possibile values multiples of five
