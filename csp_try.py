@@ -1,9 +1,21 @@
+from datetime import datetime, date, timedelta
 import pandas as pd
+import ta
+import numpy as np
+import statistics
+from ta.momentum import RSIIndicator
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.model_selection import cross_val_score
 from CSP_generics import Variable, Constraint, CSP
 from CSP_solver import Arc_Consistency
 import pickle
-import numpy as np
-import statistics
+import os
 
 def data_preparation(dataset_name):
     df = pd.read_csv(dataset_name)
@@ -137,13 +149,41 @@ def csp_solver(csp):
     return all_solutions
 
 
+def load_model(dataset_name):
+    models_directory = 'models'
+    model_filename = f'model_{dataset_name}.pkl'
+    model_path = os.path.join(models_directory, model_filename)
 
+    if os.path.exists(model_path):
+        with open(model_path, 'rb') as file:
+            model = pickle.load(file)
+        return model
+    else:
+        print(f"Model file not found for {dataset_name}")
+        return None
 
 def main():
-    csp = build_portfolio_csp(50, 60, 0.45, 0)
+    dataset_names = ["AAPL", "AMZN"]
+
+    for dataset_name in dataset_names:
+        loaded_model = load_model(dataset_name)
+
+        if loaded_model is not None:
+            print(f"Model loaded successfully for {dataset_name}")
+        else:
+            print(f"Failed to load model for {dataset_name}")
+
+
+
+
+
+
+"""
+   csp = build_portfolio_csp(50, 60, 0.45, 0)
     solutions = csp_solver(csp)
     for solution in solutions:
         print("Solution: ", solution)
+"""
 
 
 main()
