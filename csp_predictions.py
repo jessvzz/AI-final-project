@@ -180,7 +180,7 @@ def main():
             dataset_name = variable.name
             prediction = prediction_data[dataset_name]
             last_asset_value = last_y_train_values[dataset_name]
-            expected_return = prediction * (allocation / last_asset_value)
+            expected_return = prediction * (allocation / last_asset_value) - allocation
 
             total_return += expected_return
         if total_return > best_return:
