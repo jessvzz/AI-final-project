@@ -14,7 +14,8 @@ def calculate_volatility():
     datasets = ['AAPL.csv', 'AMZN.csv']
     volatilities = {}
     for dataset in datasets:
-        df = data_preparation(dataset)
+        dataset_path = 'stocks/' + dataset
+        df = data_preparation(dataset_path)
         # calculating relative price: proportional change in stock price between a day and the dau before
         df['Price relative'] = ""
         for i in range(1, len(df.Date)):

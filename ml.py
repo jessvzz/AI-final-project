@@ -43,6 +43,7 @@ def data_preparation(dataset_name):
 """
 
 def feature_eng(ds_name):
+    ds_name = 'stocks/'+ds_name
     df = data_preparation(ds_name)
     Buy_date = "10/21/2021"
     span = 100
