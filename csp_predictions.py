@@ -41,7 +41,7 @@ def calculate_volatility():
 
 asset_volatilities = calculate_volatility()
 
-def build_portfolio_csp(min_investment, max_investment, risk_factor, min_expected_return):
+def build_portfolio_csp(min_investment, max_investment, risk_factor):
     domain = np.arange(0, max_investment+10, 10)
     max_for_each = max_investment / 3
     aapl = Variable('AAPL.csv', domain)
@@ -70,33 +70,7 @@ def build_portfolio_csp(min_investment, max_investment, risk_factor, min_expecte
 
 
         return portfolio_volatility
-    """
-    def calculate_min_return(*values):
-        y_train = []
-        y_test = []
-        err=[]
-        var_values = dict(zip(variables, values))
-        filenames = [var_values[var] for var in variables]
-        for file in filenames :
-            df = pd.read_csv(file)
-            df = df.dropna()
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df.set_index('Date')
-            df = df.dropna()
 
-            #splitting the dataset
-            X = df.drop('Close', axis=1)
-            Y = df['Close']
-            X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-            X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
-
-            last_value_test = y_test[-1]
-            last_value_train = y_train[-1]
-
-            err.append((last_value_test - last_value_train)*(values[filenames.index(file)]/last_value_test))
-        err_value=sum(err)
-        return err_value
-    """
 
     constraints = []
 
@@ -133,7 +107,7 @@ def load_model(dataset_name):
         print(f"Model file not found for {dataset_name}")
         return None
 
-def main():
+def main(min_investment, max_investment, risk_factor):
     dataset_names = ["AAPL", "AMZN"]
     prediction_data = {}
     last_y_train_values = {}
@@ -169,7 +143,7 @@ def main():
         prediction_data[dataset] = prediction
 
 
-    csp = build_portfolio_csp(50, 60, 0.45, 0)
+    csp = build_portfolio_csp(min_investment, max_investment, risk_factor)
     solutions = csp_solver(csp)
     best_return = 0
     best_solution = None
@@ -191,7 +165,6 @@ def main():
     print(str(best_solution_str) + '. Expected return: ' + str(best_return))
 
 
-main()
 
 """
 TODO'S
