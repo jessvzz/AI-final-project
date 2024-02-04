@@ -50,40 +50,6 @@ def feature_eng(ds_name):
     targetdate = datetime.strptime(Buy_date, "%m/%d/%Y")
 
     """
-    RAPPORTI DI RITORNO COMULATIVI, TARGET:3g,7g,14g
-    """
-
-    targetdate_3g = targetdate + timedelta(days=3)
-    targetdate_7g = targetdate + timedelta(days=7)
-    targetdate_14g = targetdate + timedelta(days=14)
-
-    df_filtered_base = df[df['Date'] == pd.to_datetime(targetdate)]
-    df_filtered_3g = df[df['Date'] == pd.to_datetime(targetdate_3g)]
-    df_filtered_7g = df[df['Date'] == pd.to_datetime(targetdate_7g)]
-    df_filtered_14g = df[df['Date'] == pd.to_datetime(targetdate_14g)]
-
-    if df_filtered_base.empty:
-        print("No data for targetdate")
-    else:
-
-        close_base = df_filtered_base['Close'].values[0]
-        if df_filtered_3g.empty:
-            print("Nessun dato per Ritorno cumulato a 3 giorni")
-        else:
-            close_3g = df_filtered_3g['Close'].values[0]
-            print("Ritorno cumulato a 3 giorni:{:.2f}% ".format(((close_3g - close_base) / close_base) * 100))
-        if df_filtered_7g.empty:
-            print("Nessun dato per Ritorno cumulato a 7 giorni")
-        else:
-            close_7g = df_filtered_7g['Close'].values[0]
-            print("Ritorno cumulato a 7 giorni:{:.2f}% ".format(((close_7g - close_base) / close_base) * 100))
-        if df_filtered_14g.empty:
-            print("Nessun dato per Ritorno cumulato a 14 giorni")
-        else:
-            close_14g = df_filtered_14g['Close'].values[0]
-            print("Ritorno cumulato a 14 giorni:{:.2f}%".format(((close_14g - close_base) / close_base) * 100))
-
-    """
     STUDIO SUI RAPPORTI DI RITORNO
     """
 
@@ -203,7 +169,7 @@ def choose_model(X_train, y_train, X_test, y_test):
     return model
 
 def modelling():
-    datasets = ["AAPL.csv", "AMZN.csv"] #...
+    datasets = ["AMD.csv", "AMZN.csv", "CSCO.csv", "META.csv", "MSFT.csv", "NFLX.csv", "QCOM.csv"] #...
     for dataset in datasets:
         df = feature_eng(dataset)
         df['Date'] = pd.to_datetime(df['Date'])

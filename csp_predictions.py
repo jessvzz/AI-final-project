@@ -11,7 +11,7 @@ from ml import data_preparation
 
 
 def calculate_volatility():
-    datasets = ['AAPL.csv', 'AMZN.csv']
+    datasets = ["AAPL.csv", "AMZN.csv", "CSCO.csv", "META.csv", "MSFT.csv", "NFLX.csv", "QCOM.csv"]#, "SBUX.csv", "TSLA.csv"]
     volatilities = {}
     for dataset in datasets:
         dataset_path = 'stocks/' + dataset
@@ -41,20 +41,16 @@ def calculate_volatility():
 
 asset_volatilities = calculate_volatility()
 
-def build_portfolio_csp(min_investment, max_investment, risk_factor):
+def build_portfolio_csp(ds_names, min_investment, max_investment, risk_factor):
     domain = np.arange(0, max_investment+10, 10)
-    max_for_each = max_investment / 3
-    aapl = Variable('AAPL.csv', domain)
-    amzn = Variable('AMZN.csv', domain)
-    # [...]
+    variables = []
 
-    variables = [aapl, amzn]  # ...
+    for name in ds_names:
+        variables.append(Variable(name, domain))
+
+
 
     def calculate_portfolio_volatility(*values):
-        #asset_volatilities = calculate_volatility()
-
-        #asset_volatilities =  {'AAPL.csv': 0.4, 'AMZN.csv': 0.4, 'SBUX.csv': 0.4}
-
 
         # Calcolare la somma delle volatilità ponderate
         weighted_volatilities_sum = sum(
@@ -78,8 +74,7 @@ def build_portfolio_csp(min_investment, max_investment, risk_factor):
     constraints.append(Constraint(scope=variables, condition=lambda *values: sum(values) >= min_investment))
     constraints.append(
         Constraint(scope=variables, condition=lambda *values: calculate_portfolio_volatility(*values) <= risk_factor))
-    # constraints.append(Constraint(scope=variables, condition=lambda *values: calculate_min_return(*values) >= min_expected_return))
-    # constraints.append(Constraint(scope=variables, condition=lambda *values: all(value >= 0 and value <= max_for_each for value in values)))
+
     return CSP("Portfolio Optimization", variables, constraints)
 
 
@@ -87,10 +82,7 @@ def csp_solver(csp):
     arc_solver = Arc_Consistency(csp)
 
     all_solutions = arc_solver.solve_all_wrapper()
-    """"
-    for solution in all_solutions:
-        print("Solution:", solution)
-    """
+
     return all_solutions
 
 
@@ -108,9 +100,10 @@ def load_model(dataset_name):
         return None
 
 def main(min_investment, max_investment, risk_factor):
-    dataset_names = ["AAPL", "AMZN"]
+    dataset_names = ["AAPL", "AMZN", "CSCO", "META", "MSFT", "NFLX", "QCOM"]#, "SBUX", "TSLA"]
     prediction_data = {}
     last_y_train_values = {}
+    datasets = []
 
     for dataset_name in dataset_names:
         model = load_model(dataset_name)
@@ -120,6 +113,7 @@ def main(min_investment, max_investment, risk_factor):
         else:
             print(f"Failed to load model for {dataset_name}")
         dataset = dataset_name+'.csv'
+        datasets.append(dataset)
         df = feature_eng(dataset)
         df['Date'] = pd.to_datetime(df['Date'])
         df = df.dropna()
@@ -143,7 +137,7 @@ def main(min_investment, max_investment, risk_factor):
         prediction_data[dataset] = prediction
 
 
-    csp = build_portfolio_csp(min_investment, max_investment, risk_factor)
+    csp = build_portfolio_csp(datasets, min_investment, max_investment, risk_factor)
     solutions = csp_solver(csp)
     best_return = 0
     best_solution = None
@@ -163,7 +157,7 @@ def main(min_investment, max_investment, risk_factor):
 
     best_solution_str = {key: round(value, 2) for key, value in best_solution.items()}
     print(str(best_solution_str) + '. Expected return: ' + str(best_return))
-
+    return best_solution
 
 
 """
