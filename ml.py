@@ -1,24 +1,26 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 import pandas as pd
 import ta
 from ta.momentum import RSIIndicator
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.svm import SVR
-from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.model_selection import cross_val_score
+from sklearn.metrics import mean_squared_error, r2_score
 import pickle
 import os
+import numpy as np
 
+"""
+
+--- DATA PREPARATION ---
+
+
+"""
 
 def data_preparation(dataset_name):
     df = pd.read_csv(dataset_name)
 
-    """
-    ------ Data preparation ------
-    """
 
     # converting dates in yyyy-mm-dd format
     df['Date'] = pd.to_datetime(df['Date'])
@@ -32,6 +34,7 @@ def data_preparation(dataset_name):
     df['High'] = df['High'].replace('[\$,]', '', regex=True).astype(float)
     df['Low'] = df['Low'].replace('[\$,]', '', regex=True).astype(float)
 
+    #filling in missing values
     df = df.ffill()
     return df
 
@@ -44,109 +47,43 @@ def data_preparation(dataset_name):
 
 def feature_eng(ds_name):
     ds_name = 'stocks/'+ds_name
+
+    #pre-processing data
     df = data_preparation(ds_name)
-    Buy_date = "10/21/2021"
-    span = 100
-    targetdate = datetime.strptime(Buy_date, "%m/%d/%Y")
+
 
     """
-    STUDIO SUI RAPPORTI DI RITORNO
+    TECHNICAL INDICATORS
     """
-
-    df_ROI = pd.DataFrame()
-
-    df_100g = df[df['Date'] >= pd.to_datetime(targetdate)]
-    df_100g = df_100g[df_100g['Date'] <= pd.to_datetime(targetdate) + timedelta(days=100)]
-
-    Buy_date_close = df[df['Date'] == pd.to_datetime(targetdate)]['Close'].values[0]
-
-    for date in df_100g.iterrows():
-        close = date[1]['Close']
-        ROI = (close / Buy_date_close) * 100
-        df_ROI = pd.concat([df_ROI, pd.DataFrame({'Date': [date[1]['Date']], 'ROI': [ROI]})])
-        df_ROI['ROI_Moving_Avg'] = df_ROI['ROI'].rolling(window=3).mean()
-
-    """
-    INDICATORI TECNICI
-    """
-    df_ema = pd.DataFrame()
-    df_ema['Date'] = df['Date']
-    df_ema['Close'] = df['Close']
-    df_ema['EMA'] = df['Close'].ewm(span=100, adjust=False).mean()
-    df_ema['RSI'] = ta.momentum.rsi(df['Close'])
-
-    """
-    ON BALANCE VOLUME
-    """
+    #Relative Strength Index (RSI)
+    df['RSI'] = ta.momentum.rsi(df['Close'])
+    #On Balance Volume (OBV)
     df['OBV'] = ta.volume.OnBalanceVolumeIndicator(close=df['Close'], volume=df['Volume']).on_balance_volume()
-
-    """
-    TAKE-PROFIT
-    """
+    #Take Profit
     df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
-
-    """
-    SIMPLE MOVING AVERAGE
-    """
+    #Simple Moving Average
     df['sma'] = df['TP'].rolling(14).mean()
-
-    """
-    MEAN ABSOLUTE DEAVIATION
-    """
+    #Mean Absolute Deviation
     df['mad'] = df['TP'].rolling(14).apply(lambda x: (pd.Series(x) - pd.Series(x).mean()).abs().mean())
-
-    """
-    COMMODITY CHANNEL INDEX
-    """
+    #Commodity Channel Index
     df['CCI'] = (df['TP'] - df['sma']) / (0.015 * df['mad'])
 
-
-
-    """
-    MOVING AVERAGE CONVERGENCE-DIVERGENCE
-    """
+    #Moving Average Convergence-Divergence
+    #Calculating Exponential Moving Average  for 12 and 26 periods
     df['ema_12'] = df['Close'].ewm(span=12, adjust=False).mean()
     df['ema_26'] = df['Close'].ewm(span=26, adjust=False).mean()
-
+    #Calculating Moving Average Convergence-Divergence (MACD)
     df['macd'] = df['ema_12'] - df['ema_26']
-
+    #Dropping unnecessary columns
     df.drop('ema_12', axis=1, inplace=True)
     df.drop('ema_26', axis=1, inplace=True)
     return df
 
 
-"""
+def choose_model(X_train, y_train, X_test, y_test, ds_name):
+    """return the best model for the data set, based on the MSE score"""
 
---- FEATURES SELECTION ---
-
-df = df.dropna()
-
-features = df.columns.tolist()
-features.remove('Close')
-features.remove('Date')
-
-x = df[features]
-y = df['Close']
-
-model = RandomForestRegressor()
-
-model.fit(x, y)
-feature_importance = model.feature_importances_
-
-feature_importance_df = pd.DataFrame({'Feature': features, 'Importance': feature_importance})
-feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
-
-print(feature_importance_df)
-"""
-
-
-
-"""
-
---- SPLITTING THE DATASET --- 
-
-"""
-def choose_model(X_train, y_train, X_test, y_test):
+    #picks between Linear Regression, Random Forest Regressor, Support Vector Machine
     models = {
         'Linear Regression': LinearRegression(),
         'Random Forest': RandomForestRegressor(),
@@ -156,57 +93,87 @@ def choose_model(X_train, y_train, X_test, y_test):
     model = None
     best_mse = float('inf')
 
-    for name, possible_model in models.items():
-        possible_model.fit(X_train, y_train)
-        y_pred = possible_model.predict(X_test)
-        mse = mean_squared_error(y_test, y_pred)
-        print(f"{name} - MSE: {mse}")
+    #creates a new directory if it does not exist, to contain performance files
+    performance_directory = 'performance'
+    os.makedirs(performance_directory, exist_ok=True)
 
-        if mse < best_mse:
-            best_mse = mse
-            model = possible_model
+    #to write print statements directly into performance file
+    with open(f'{performance_directory}/{ds_name}_performances.txt', 'w') as file:
+        #iterates over the models
+        for name, possible_model in models.items():
+            #fits the model to the train groups
+            possible_model.fit(X_train, y_train)
+            #predicts the target values of the x_test group
+            y_pred = possible_model.predict(X_test)
+            #calculates accuracy of predictions using mean squared error
+            mse = mean_squared_error(y_test, y_pred)
+
+
+            #finding model with lowest mse
+            if mse < best_mse:
+                best_mse = mse
+                model = possible_model
+                #writes in the file which model was chosen
+                print(f"For the dataset {ds_name}, {name} was chosen.", file=file)
+
     return model
 
 def modelling(dataset):
         df = feature_eng(dataset)
-        df['Date'] = pd.to_datetime(df['Date'])
+        #drops na values
         df = df.dropna()
+        #sets date as index
         df.set_index('Date', inplace=True)
-
+        
+        #close price is target value
         X = df.drop('Close', axis=1)
         Y = df['Close']
-
+        
+        #splitting dataset in train and test: 80%, 20%
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+        #splitting train group for cross validation
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
-        model = choose_model(X_train, y_train, X_test, y_test)
+        #needed dataset names without extensions to name .pkl and .txt files
+        dataset_name = os.path.splitext(dataset)[0]
 
+        #choosing model
+        model = choose_model(X_train, y_train, X_test, y_test, dataset_name)
+        
+        #training the model
         model.fit(X, Y)
 
-        """
+        #fitting to the train group for cross validation
         model.fit(X_train, y_train)
+        #predicting
         y_pred = model.predict(X_test)
+        #calculating mse
         mse = mean_squared_error(y_test, y_pred)
+        #calculating r2 scored
         r2 = r2_score(y_test, y_pred)
+        #calculating residual standard deviation
         std_residual = np.sqrt(mse)
-
-        print(f"MSE: {mse}, R²: {r2}, Deviazione Standard Residua: {std_residual}")
 
         # cross_validation
         cross_val_scores = cross_val_score(model, X, Y, cv=5, scoring='neg_mean_squared_error')
+        # calculating average cross validation
         avg_cross_val_mse = -cross_val_scores.mean()
 
-        print(f"Media MSE con validazione incrociata: {avg_cross_val_mse}")
-        """
-        dataset_name = os.path.splitext(dataset)[0]
-        models_directory = 'models'
+        #saving performance data
+        with open(f'performance/{dataset_name}_performances.txt', 'a') as file:
+            print("STATISTICS:", file=file)
+            print(f"MSE: {mse}\nR²: {r2}\nResidual Standard Deviation: {std_residual}\nAverage mse with cross validation: {avg_cross_val_mse}", file=file)
 
+        #if it doesn't exist, creates new directory to contain the pre - trained models
+        models_directory = 'models'
         os.makedirs(models_directory, exist_ok=True)
 
         with open(f'{models_directory}/model_{dataset_name}.pkl', 'wb') as file:
+            #dumps pre-trained model in the .pkl file
             pickle.dump(model, file)
         print(f"Saved and trained model for {dataset}!")
 
+#runs only if running directly from this script. Only running once to have pretrained models should suffice.
 if __name__ == "__main__":
     datasets = ["AMD.csv", "CSCO.csv", "QCOM.csv", "SBUX.csv", "TSLA.csv"]
     for dataset in datasets:
