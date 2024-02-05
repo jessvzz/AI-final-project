@@ -150,7 +150,6 @@ def choose_model(X_train, y_train, X_test, y_test):
     models = {
         'Linear Regression': LinearRegression(),
         'Random Forest': RandomForestRegressor(),
-        'Gradient Boosting': GradientBoostingRegressor(),
         'Support Vector Machine': SVR()
     }
 
@@ -168,9 +167,7 @@ def choose_model(X_train, y_train, X_test, y_test):
             model = possible_model
     return model
 
-def modelling():
-    datasets = ["AMD.csv", "AMZN.csv", "CSCO.csv", "META.csv", "MSFT.csv", "NFLX.csv", "QCOM.csv"] #...
-    for dataset in datasets:
+def modelling(dataset):
         df = feature_eng(dataset)
         df['Date'] = pd.to_datetime(df['Date'])
         df = df.dropna()
@@ -210,5 +207,8 @@ def modelling():
             pickle.dump(model, file)
         print(f"Saved and trained model for {dataset}!")
 
-modelling()
+if __name__ == "__main__":
+    datasets = ["AMD.csv", "CSCO.csv", "QCOM.csv", "SBUX.csv", "TSLA.csv"]
+    for dataset in datasets:
+        modelling(dataset)
 

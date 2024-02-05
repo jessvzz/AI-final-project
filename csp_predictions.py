@@ -6,12 +6,10 @@ from CSP_generics import Variable, Constraint, CSP
 from CSP_solver import Arc_Consistency
 import pickle
 import os
-from ml import feature_eng
-from ml import data_preparation
+from ml import feature_eng, data_preparation, modelling
 
 
-def calculate_volatility():
-    datasets = ["AAPL.csv", "AMZN.csv", "CSCO.csv", "META.csv", "MSFT.csv", "NFLX.csv", "QCOM.csv"]#, "SBUX.csv", "TSLA.csv"]
+def calculate_volatility(datasets):
     volatilities = {}
     for dataset in datasets:
         dataset_path = 'stocks/' + dataset
@@ -39,9 +37,8 @@ def calculate_volatility():
     #print(volatilities)
     return volatilities
 
-asset_volatilities = calculate_volatility()
 
-def build_portfolio_csp(ds_names, min_investment, max_investment, risk_factor):
+def build_portfolio_csp(ds_names, min_investment, max_investment, risk_factor, asset_volatilities):
     domain = np.arange(0, max_investment+10, 10)
     variables = []
 
@@ -78,7 +75,7 @@ def build_portfolio_csp(ds_names, min_investment, max_investment, risk_factor):
     return CSP("Portfolio Optimization", variables, constraints)
 
 
-def csp_solver(csp):
+def csp_solver(csp, asset_volatilities):
     arc_solver = Arc_Consistency(csp)
 
     all_solutions = arc_solver.solve_all_wrapper()
@@ -100,19 +97,26 @@ def load_model(dataset_name):
         return None
 
 def main(min_investment, max_investment, risk_factor):
-    dataset_names = ["AAPL", "AMZN", "CSCO", "META", "MSFT", "NFLX", "QCOM"]#, "SBUX", "TSLA"]
+    dataset_names = ["AMD", "CSCO", "QCOM", "SBUX", "TSLA"]
+    datasets = [dataset + '.csv' for dataset in dataset_names]
+    asset_volatilities = calculate_volatility(datasets)
+
     prediction_data = {}
     last_y_train_values = {}
     datasets = []
 
     for dataset_name in dataset_names:
         model = load_model(dataset_name)
+        dataset = dataset_name+'.csv'
+
 
         if model is not None:
             print(f"Model loaded successfully for {dataset_name}")
         else:
-            print(f"Failed to load model for {dataset_name}")
-        dataset = dataset_name+'.csv'
+            modelling(dataset)
+            model = load_model(dataset_name)
+            print(f"Model loaded successfully for {dataset_name}")
+
         datasets.append(dataset)
         df = feature_eng(dataset)
         df['Date'] = pd.to_datetime(df['Date'])
@@ -137,8 +141,8 @@ def main(min_investment, max_investment, risk_factor):
         prediction_data[dataset] = prediction
 
 
-    csp = build_portfolio_csp(datasets, min_investment, max_investment, risk_factor)
-    solutions = csp_solver(csp)
+    csp = build_portfolio_csp(datasets, min_investment, max_investment, risk_factor, asset_volatilities)
+    solutions = csp_solver(csp, asset_volatilities)
     best_return = 0
     best_solution = None
     for solution in solutions:
@@ -155,12 +159,9 @@ def main(min_investment, max_investment, risk_factor):
             best_return = total_return
             best_solution = solution
 
+
     best_solution_str = {key: round(value, 2) for key, value in best_solution.items()}
     print(str(best_solution_str) + '. Expected return: ' + str(best_return))
+
     return best_solution
 
-
-"""
-TODO'S
-make domains and possibile values multiples of five
-"""

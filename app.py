@@ -25,7 +25,8 @@ def handle_data():
 @app.route('/output')
 def final_output():
     bst = request.args['bst']
-    return f"Best stocks to invest in are {bst}"
+    formatted_output = bst[1:-1].replace(", ", "<br>")
+    return f"Best stocks to invest in are <br>{formatted_output}"
 
 
 if __name__ == '__main__':
