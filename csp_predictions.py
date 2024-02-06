@@ -7,6 +7,7 @@ from CSP_solver import Arc_Consistency
 import pickle
 import os
 from ml import feature_eng, data_preparation, modelling
+import matplotlib.pyplot as plt
 
 
 def calculate_volatility(datasets):
@@ -39,7 +40,13 @@ def calculate_volatility(datasets):
 
 
 def build_portfolio_csp(ds_names, min_investment, max_investment, risk_factor, asset_volatilities):
-    domain = np.arange(0, max_investment+10, 10)
+    if max_investment<=100:
+        domain = np.arange(0, max_investment+10, 10)
+    elif (max_investment>100 and  max_investment<=300):
+        domain = np.arange(0, max_investment + 50, 50)
+    else:
+        domain = np.arange(0, max_investment + 10, 100)
+
     variables = []
 
     for name in ds_names:
@@ -159,9 +166,24 @@ def main(min_investment, max_investment, risk_factor):
             best_return = total_return
             best_solution = solution
 
+    final_solution = {}
+    for x, y in best_solution.items():
+        if y!=0:
+            final_solution[x] = y
+    assets = []
+    allocations = []
 
-    best_solution_str = {key: round(value, 2) for key, value in best_solution.items()}
+    for x, y in final_solution.items():
+        assets.append(x)
+        allocations.append(y)
+
+    plt.pie(allocations, labels=assets)
+    plt.axis('equal')
+
+    plt.savefig("piegraph.jpg", dpi=300)
+
+    best_solution_str = {key: round(value, 2) for key, value in final_solution.items()}
     print(str(best_solution_str) + '. Expected return: ' + str(best_return))
 
-    return best_solution
 
+    return final_solution

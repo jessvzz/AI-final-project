@@ -75,9 +75,9 @@
         <div class="card">
         <form action="{{ url_for('handle_data') }}" method="post" enctype="multipart/form-data">
             <label for="min_inv">investimento minimo:</label>
-            <input type="number"  name='min_inv' min="0" value="{{ min_inv }}"><br><br>
+            <input type="number"  name='min_inv' max="1000" min="0" value="{{ min_inv }}"><br><br>
             <label for="max_inv">investimento massimo:</label>
-            <input type="number" name='max_inv' min="0" value="{{ max_inv }}"><br><br>
+            <input type="number" name='max_inv' max= "1000" min="0" value="{{ max_inv }}"><br><br>
 
             <label for="max_vol">max grado di volatilità:</label>
             <input type="number" max="1" min="0.35" step="0.01" value="{{ max_vol }}" name="max_vol"><br>
