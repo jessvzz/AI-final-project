@@ -26,6 +26,8 @@ def handle_data():
 def final_output():
     bst = request.args['bst']
     formatted_output = bst[1:-1].replace(", ", "\n")
+    formatted_output = formatted_output.replace(".0", "$")
+    formatted_output = formatted_output.replace(".csv", "")
     return render_template('output.html', formatted_output=formatted_output)
     #return f"Best stocks to invest in are <br>{formatted_output}"
 

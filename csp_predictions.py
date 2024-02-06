@@ -174,10 +174,14 @@ def main(min_investment, max_investment, risk_factor):
     allocations = []
 
     for x, y in final_solution.items():
-        assets.append(x)
+        var_name = x.name.replace(".csv" , "")
+        assets.append(var_name)
         allocations.append(y)
 
-    plt.pie(allocations, labels=assets)
+    os.makedirs('static', exist_ok=True)
+    colors = ['mediumpurple','rebeccapurple','blueviolet','indigo','plum']
+
+    plt.pie(allocations, colors=colors,labels=assets)
     plt.axis('equal')
 
     plt.savefig("static/piegraph.jpg", dpi=300)
