@@ -180,7 +180,7 @@ def main(min_investment, max_investment, risk_factor):
     plt.pie(allocations, labels=assets)
     plt.axis('equal')
 
-    plt.savefig("piegraph.jpg", dpi=300)
+    plt.savefig("static/piegraph.jpg", dpi=300)
 
     best_solution_str = {key: round(value, 2) for key, value in final_solution.items()}
     print(str(best_solution_str) + '. Expected return: ' + str(best_return))
