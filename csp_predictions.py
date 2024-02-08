@@ -1,3 +1,4 @@
+import shutil
 from datetime import timedelta
 import pandas as pd
 import numpy as np
@@ -42,12 +43,17 @@ def calculate_volatility(datasets):
 
 
 def build_portfolio_csp(ds_names, min_investment, max_investment, risk_factor, asset_volatilities):
+    incr = 0
     if max_investment<=100:
-        domain = np.arange(0, max_investment+10, 10)
-    elif (max_investment>100 and  max_investment<=300):
-        domain = np.arange(0, max_investment + 50, 50)
+        incr =10
+    elif max_investment>100 and max_investment<=400:
+        incr = 50
+    elif max_investment>400 and max_investment<=600:
+        incr = 100
     else:
-        domain = np.arange(0, max_investment + 10, 100)
+        incr = 150
+
+    domain = np.arange(0, max_investment + incr, incr)
 
     variables = []
 
@@ -106,24 +112,50 @@ def load_model(dataset_name):
         return None
 
 def data_visualization(solution):
+    if os.path.exists('static'):
+        shutil.rmtree('static')
+    os.makedirs('static', exist_ok=True)
+
+    #for time series
     colors = ['#6f3cff', '#fca778', '#c2bcff', '#7f50ff', '#af9cff', '#ffc282']
     fig = go.Figure()
 
+    #for pie chart
+    assets = []
+    allocations = []
+
     for var, y in solution.items():
         file_name = var.name
+
+        #for time series
         df = data_preparation('stocks/'+file_name)
         color = random.choice(colors)
         fig.add_trace(go.Scatter(x=df['Date'], y=df['High'], mode='lines', name=file_name.replace('.csv', ''), marker=dict(color=color)))
         colors.remove(color)
 
+        #for pie charts
+        file_name = file_name.replace(".csv", "")
+        assets.append(file_name)
+        allocations.append(y)
+
+    #time series
     fig.update_layout(title='Assets trends',
                       xaxis_title='Date',
                       yaxis_title='Price',
                       plot_bgcolor='#ffffff')
 
-    os.makedirs('static', exist_ok=True)
+    if os.path.exists("static/time_series_plot_interactive.html"):
+        os.remove("static/time_series_plot_interactive.html")
     fig.write_html("static/time_series_plot_interactive.html")
-        #x = x.name.replace(".csv", "")
+
+
+    #pie chart
+    colors = ['#6f3cff', '#fca778', '#c2bcff', '#ffc282', '#7f50ff']
+    plt.pie(allocations, colors=colors, labels=assets)
+    plt.axis('equal')
+    if os.path.exists("static/piegraph.jpg"):
+        os.remove("static/piegraph.jpg")
+    plt.savefig("static/piegraph.jpg", dpi=300)
 
 
 def main(min_investment, max_investment, risk_factor):
@@ -194,24 +226,8 @@ def main(min_investment, max_investment, risk_factor):
         if y!=0:
             final_solution[x] = y
 
-    assets = []
-    allocations = []
 
     data_visualization(final_solution)
-
-
-    for x, y in final_solution.items():
-        var_name = x.name.replace(".csv" , "")
-        assets.append(var_name)
-        allocations.append(y)
-
-    os.makedirs('static', exist_ok=True)
-
-    colors = ['#6f3cff','#fca778','#c2bcff','#ffc282','#7f50ff']
-    plt.pie(allocations, colors=colors,labels=assets)
-    plt.axis('equal')
-    plt.savefig("static/piegraph.jpg", dpi=300)
-
 
 
     best_solution_str = {key: round(value, 2) for key, value in final_solution.items()}
