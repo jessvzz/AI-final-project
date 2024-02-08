@@ -8,6 +8,8 @@ import pickle
 import os
 from ml import feature_eng, data_preparation, modelling
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import random
 
 
 def calculate_volatility(datasets):
@@ -103,6 +105,27 @@ def load_model(dataset_name):
         print(f"Model file not found for {dataset_name}")
         return None
 
+def data_visualization(solution):
+    colors = ['#6f3cff', '#fca778', '#c2bcff', '#7f50ff', '#af9cff', '#ffc282']
+    fig = go.Figure()
+
+    for var, y in solution.items():
+        file_name = var.name
+        df = data_preparation('stocks/'+file_name)
+        color = random.choice(colors)
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['High'], mode='lines', name=file_name.replace('.csv', ''), marker=dict(color=color)))
+        colors.remove(color)
+
+    fig.update_layout(title='Assets trends',
+                      xaxis_title='Date',
+                      yaxis_title='Price',
+                      plot_bgcolor='#ffffff')
+
+    os.makedirs('static', exist_ok=True)
+    fig.write_html("static/time_series_plot_interactive.html")
+        #x = x.name.replace(".csv", "")
+
+
 def main(min_investment, max_investment, risk_factor):
     dataset_names = ["AMD", "CSCO", "QCOM", "SBUX", "TSLA"]
     datasets = [dataset + '.csv' for dataset in dataset_names]
@@ -170,8 +193,12 @@ def main(min_investment, max_investment, risk_factor):
     for x, y in best_solution.items():
         if y!=0:
             final_solution[x] = y
+
     assets = []
     allocations = []
+
+    data_visualization(final_solution)
+
 
     for x, y in final_solution.items():
         var_name = x.name.replace(".csv" , "")
@@ -179,15 +206,17 @@ def main(min_investment, max_investment, risk_factor):
         allocations.append(y)
 
     os.makedirs('static', exist_ok=True)
-    colors = ['mediumpurple','rebeccapurple','blueviolet','indigo','plum']
 
+    colors = ['#6f3cff','#fca778','#c2bcff','#ffc282','#7f50ff']
     plt.pie(allocations, colors=colors,labels=assets)
     plt.axis('equal')
-
     plt.savefig("static/piegraph.jpg", dpi=300)
+
+
 
     best_solution_str = {key: round(value, 2) for key, value in final_solution.items()}
     print(str(best_solution_str) + '. Expected return: ' + str(best_return))
 
 
     return final_solution
+

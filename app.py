@@ -17,9 +17,10 @@ def handle_data():
     max_inv = float(request.form['max_inv'])
     max_vol = float(request.form['max_vol'])
 
-    bestreturnstocksset=csp_predictions.main(float(min_inv), float(max_inv), float(max_vol))
+    bestreturnstocksset = csp_predictions.main(min_inv, max_inv, max_vol)
     print(bestreturnstocksset)
     return redirect(url_for('final_output', bst=bestreturnstocksset))
+
 
 
 @app.route('/output')
