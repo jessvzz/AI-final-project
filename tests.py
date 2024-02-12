@@ -46,16 +46,23 @@ def data_preparation(dataset_name):
     return df
 
 
+"""
+
+--- FEATURE ENGINEERING ---
+
+
+"""
 
 
 def feature_eng(ds_name):
-    #building path to dataset
     ds_name = 'stocks/' + ds_name
 
     # pre-processing data
     df = data_preparation(ds_name)
 
-
+    """
+    TECHNICAL INDICATORS
+    """
     # Relative Strength Index (RSI)
     df['RSI'] = ta.momentum.rsi(df['Close'])
     # On Balance Volume (OBV)
@@ -89,25 +96,27 @@ def feature_eng(ds_name):
 
 
 def feature_selection(X_train, y_train, X_test):
-
-    # we'd prefer not to count banal columns
     columns_to_drop = ['Open', 'High', 'Low']
     X_train = X_train.drop(columns=columns_to_drop, errors='ignore')
     X_test = X_test.drop(columns=columns_to_drop, errors='ignore')
 
     model = LinearRegression()
 
-    # initializating rfe
-    rfe = RFE(model, n_features_to_select=5)
+    # Inizializzazione RFE
+    rfe = RFE(model, n_features_to_select=5)  # Specificare il numero desiderato di caratteristiche
 
-    # training and transforming
+    # Addestramento e trasformazione
     X_train_selected = rfe.fit_transform(X_train, y_train)
     X_test_selected = rfe.transform(X_test)
 
-    # giving feature names to rfe model
+    # Passa i nomi delle colonne al modello RFE
     rfe_feature_names = X_train.columns[rfe.support_]
 
+    # Ottenere gli indici delle feature selezionate
+    selected_feature_indices = rfe.support_
 
+    # Ottenere i nomi delle feature dal DataFrame originale
+    selected_feature_names = X_train.columns[selected_feature_indices]
 
     return X_train_selected, X_test_selected, rfe_feature_names
 
@@ -165,11 +174,11 @@ def modelling(dataset):
     # splitting dataset for feature selection
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-    #performs feature selection
+
+
+
     X_train, X_test, features = feature_selection(X_train, y_train, X_test)
 
-    #saving the features in a txt file
-    # (if the model is linear regressor it does not have a "feature_name" attribute)
     os.makedirs('features', exist_ok=True)
     dataset_name = dataset.replace('.csv', '')
     with open(f'features/{dataset_name}_features.txt', 'w') as file:
@@ -186,14 +195,14 @@ def modelling(dataset):
     # choosing model
     model = choose_model(X_train, y_train, X_test, y_test, dataset_name)
 
-    #indicating feature_names
     model.feature_names = features
 
     # training the model
+
+    # fitting to the train group for cross validation
     model.fit(X_train, y_train)
     # predicting
     y_pred = model.predict(X_test)
-
     # calculating mse
     mse = mean_squared_error(y_test, y_pred)
     # calculating r2 scored

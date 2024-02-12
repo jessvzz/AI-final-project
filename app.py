@@ -1,7 +1,6 @@
-from flask import Flask, render_template, request, redirect , url_for
-from glob import glob
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import csp_predictions
-import json
+import time
 
 app = Flask(__name__)
 
@@ -17,9 +16,15 @@ def handle_data():
     max_inv = float(request.form['max_inv'])
     max_vol = float(request.form['max_vol'])
 
+
+
     bestreturnstocksset = csp_predictions.main(min_inv, max_inv, max_vol)
+
+
     print(bestreturnstocksset)
     return redirect(url_for('final_output', bst=bestreturnstocksset))
+
+@app.route('/loading')
 
 
 
@@ -30,7 +35,6 @@ def final_output():
     formatted_output = formatted_output.replace(".0", "$")
     formatted_output = formatted_output.replace(".csv", "")
     return render_template('output.html', formatted_output=formatted_output)
-    #return f"Best stocks to invest in are <br>{formatted_output}"
 
 
 if __name__ == '__main__':

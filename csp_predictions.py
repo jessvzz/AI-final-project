@@ -7,7 +7,7 @@ from CSP_generics import Variable, Constraint, CSP
 from CSP_solver import Arc_Consistency
 import pickle
 import os
-from ml import feature_eng, data_preparation, modelling
+from ml import feature_eng, data_preparation, modelling, feature_selection
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import random
@@ -157,6 +157,22 @@ def data_visualization(solution):
         os.remove("static/piegraph.jpg")
     plt.savefig("static/piegraph.jpg", dpi=300)
 
+def get_features(dataset, X):
+    with open(f'features/{dataset}_features.txt', 'r') as file:
+        lines = file.readlines()
+    column_names_in_file = []
+
+    for line in lines:
+        line = line.strip()
+        column_names_in_file.append(line)
+
+    column_names_X = set(X.columns)
+    for col in column_names_X:
+        if col not in column_names_in_file:
+            X = X.drop(columns=col, errors='ignore')
+
+    return X
+
 
 def main(min_investment, max_investment, risk_factor):
     dataset_names = ["AMD", "CSCO", "QCOM", "SBUX", "TSLA"]
@@ -193,7 +209,8 @@ def main(min_investment, max_investment, risk_factor):
         # Separazione delle variabili indipendenti (X) dalle dipendenti (Y)
         X_train = train.drop('Close', axis=1)
         y_train = train['Close']
-        X_test = test.drop('Close', axis=1)
+        X_test = get_features(dataset_name, test)
+
         last_y_train_values[dataset] = y_train.iloc[-1]
 
 
@@ -236,3 +253,4 @@ def main(min_investment, max_investment, risk_factor):
 
     return final_solution
 
+#main(100, 500, 0.5)

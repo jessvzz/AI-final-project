@@ -1,0 +1,5 @@
+RSI
+TP
+sma14
+mad
+macd

@@ -1,6 +1,6 @@
 For the dataset TSLA, Linear Regression was chosen.
 STATISTICS:
-MSE: 1.8421386715326524e-21
-R²: 1.0
-Residual Standard Deviation: 4.292014295797082e-11
-Average mse with cross validation: 1.8610901828964982e-20
+MSE: 5.669905983174324
+R²: 0.9994044414197917
+Residual Standard Deviation: 2.381156438198533
+Average mse with cross validation: 1.3507653305715843e-20

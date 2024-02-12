@@ -1,6 +1,6 @@
 For the dataset CSCO, Linear Regression was chosen.
 STATISTICS:
-MSE: 1.3442469725436988e-23
-R²: 1.0
-Residual Standard Deviation: 3.666397376913336e-12
-Average mse with cross validation: 3.455648213665502e-23
+MSE: 0.0421686607489687
+R²: 0.9985983684461612
+Residual Standard Deviation: 0.20535009313114203
+Average mse with cross validation: 8.698215344480284e-22
