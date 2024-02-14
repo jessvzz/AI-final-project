@@ -1,11 +1,6 @@
-import shutil
-import os
-import time
-
 
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import csp_predictions
-import time
 
 app = Flask(__name__)
 
