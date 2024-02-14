@@ -11,6 +11,7 @@ from ml import feature_eng, data_preparation, modelling, feature_selection
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import random
+import warnings
 
 
 def calculate_volatility(datasets):
@@ -43,15 +44,20 @@ def calculate_volatility(datasets):
 
 
 def build_portfolio_csp(ds_names, min_investment, max_investment, risk_factor, asset_volatilities):
+    if min_investment>max_investment:
+        min_investment = 0
     incr = 0
     if max_investment<=100:
         incr =10
     elif max_investment>100 and max_investment<=400:
         incr = 50
+    else:
+        incr = 100
+    """   
     elif max_investment>400 and max_investment<=600:
         incr = 100
-    else:
-        incr = 150
+    """
+
 
     domain = np.arange(0, max_investment + incr, incr)
 
@@ -120,9 +126,10 @@ def data_visualization(solution):
     colors = ['#6f3cff', '#fca778', '#c2bcff', '#7f50ff', '#af9cff', '#ffc282']
     fig = go.Figure()
 
-    #for pie chart
+    #for pie chart and polar chart
     assets = []
     allocations = []
+
 
     for var, y in solution.items():
         file_name = var.name
@@ -137,6 +144,7 @@ def data_visualization(solution):
         file_name = file_name.replace(".csv", "")
         assets.append(file_name)
         allocations.append(y)
+
 
     #time series
     fig.update_layout(title='Assets trends',
@@ -157,6 +165,28 @@ def data_visualization(solution):
         os.remove("static/piegraph.jpg")
     plt.savefig("static/piegraph.jpg", dpi=300)
 
+    """    
+    theta = np.linspace(0, 2 * np.pi, len(assets), endpoint=False)
+
+    plt.figure(figsize=(10, 6))
+    plt.subplot(polar=True)
+
+    # Impostazione delle etichette delle griglie
+    (lines, labels) = plt.thetagrids(range(0, 360, int(360 / len(assets))), assets)
+
+    # Plot degli allocations
+    plt.plot(theta, allocations)
+    plt.fill(theta, allocations, 'b', alpha=0.2)
+
+    # Aggiunta di legenda e titolo
+    plt.legend(labels=('Allocations',), loc=1)
+    plt.title("Asset Allocations")
+
+    if os.path.exists("static/polargraph.jpg"):
+        os.remove("static/polargraph.jpg")
+    plt.savefig("static/polargraph.jpg", dpi=300)
+    """
+
 def get_features(dataset, X):
     with open(f'features/{dataset}_features.txt', 'r') as file:
         lines = file.readlines()
@@ -175,6 +205,8 @@ def get_features(dataset, X):
 
 
 def main(min_investment, max_investment, risk_factor):
+    warnings.filterwarnings("ignore")
+
     dataset_names = ["AMD", "CSCO", "QCOM", "SBUX", "TSLA"]
     datasets = [dataset + '.csv' for dataset in dataset_names]
     asset_volatilities = calculate_volatility(datasets)
@@ -238,19 +270,21 @@ def main(min_investment, max_investment, risk_factor):
             best_return = total_return
             best_solution = solution
 
-    final_solution = {}
-    for x, y in best_solution.items():
-        if y!=0:
-            final_solution[x] = y
+    if best_solution is not None:
+        final_solution = {}
+        for x, y in best_solution.items():
+            if y!=0:
+                final_solution[x] = y
 
 
-    data_visualization(final_solution)
+        data_visualization(final_solution)
 
 
-    best_solution_str = {key: round(value, 2) for key, value in final_solution.items()}
-    print(str(best_solution_str) + '. Expected return: ' + str(best_return))
+        best_solution_str = {key: round(value, 2) for key, value in final_solution.items()}
+        print(str(best_solution_str) + '. Expected return: ' + str(best_return))
 
 
-    return final_solution
+        return final_solution
+    return None
 
-#main(100, 500, 0.5)
+#main(10, 10, 0.5)

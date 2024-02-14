@@ -32,7 +32,7 @@
         .card {
             margin: 1rem;
             width: 100%;
-            height: 300px;
+            height: 350px;
             max-width: 400px;
             background-color: #FFF;
             border-radius: 10px;
@@ -56,8 +56,33 @@
             align-items: center;
         }
 
+        .button {
+          --bg: #FF965C;
+          --hover-bg: #a9a9fd;
+          --hover-text: #FFF;
+          color: #fff;
+          cursor: pointer;
+          border: 1px solid var(--bg);
+          border-radius: 4px;
+          padding: 0.8em 2em;
+          background: var(--bg);
+          transition: 0.2s;
+        }
+
+        .button:hover {
+          color: var(--hover-text);
+          transform: translate(-0.25rem, -0.25rem);
+          background: var(--hover-bg);
+          box-shadow: 0.25rem 0.25rem var(--bg);
+        }
+
+        .button:active {
+          transform: translate(0);
+          box-shadow: none;
+        }
+
         .graph{
-            width: 400px;
+            height: 250px;
         }
 
         .card-graph{
@@ -89,7 +114,8 @@
             <pre class="res">{{ formatted_output }}</pre>
         </div>
         <div class = "card">
-            <img class="graph" src="/static/piegraph.jpg" alt="piegraph" >
+            <img class="graph" id="graphImage" src="/static/piegraph.jpg" alt="Pie Chart">
+            <button class="button" id="graphButton" onclick="toggleGraph()">View polar</button>
         </div>
 
     </div>
@@ -99,7 +125,21 @@
     </div>
 </div>
 
+<script>
 
+    function toggleGraph() {
+        var button = document.getElementById("graphButton");
+        var image = document.getElementById("graphImage");
+
+        if (button.innerHTML === "View polar") {
+            button.innerHTML = "View pie";
+            image.src = "/static/polargraph.jpg";
+        } else {
+            button.innerHTML = "View polar";
+            image.src = "/static/piegraph.jpg";
+        }
+    }
+</script>
 
 </body>
 </html>
