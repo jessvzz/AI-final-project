@@ -130,7 +130,7 @@ def data_visualization(solution):
     assets = []
     allocations = []
 
-
+    
     for var, y in solution.items():
         file_name = var.name
 
@@ -164,6 +164,9 @@ def data_visualization(solution):
     if os.path.exists("static/piegraph.jpg"):
         os.remove("static/piegraph.jpg")
     plt.savefig("static/piegraph.jpg", dpi=300)
+    plt.cla()
+    plt.clf()
+    plt.close()
 
     """    
     theta = np.linspace(0, 2 * np.pi, len(assets), endpoint=False)
