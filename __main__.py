@@ -1,5 +1,5 @@
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for
 import csp_predictions
 
 app = Flask(__name__)

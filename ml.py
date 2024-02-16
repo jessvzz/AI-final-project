@@ -1,32 +1,26 @@
-from datetime import datetime, timedelta
 import pandas as pd
 import ta
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
 from ta.momentum import RSIIndicator
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.feature_selection import SelectFromModel, SelectKBest, f_regression
 import pickle
 import os
 import numpy as np
-from scipy.stats import spearmanr
 from sklearn.feature_selection import RFE
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.feature_selection import SelectFromModel
-
-
-
-"""
-
---- DATA PREPARATION ---
-
-
-"""
 
 
 def data_preparation(dataset_name):
+    """
+    :param dataset_name: takes a csv file name as an input
+    :return: ready to use dataframe
+    """
+
+    #converts dataset into dataframe
     df = pd.read_csv(dataset_name)
 
     # converting dates in yyyy-mm-dd format
@@ -41,6 +35,7 @@ def data_preparation(dataset_name):
     df['High'] = df['High'].replace('[\$,]', '', regex=True).astype(float)
     df['Low'] = df['Low'].replace('[\$,]', '', regex=True).astype(float)
 
+
     # filling in missing values
     df = df.ffill()
     return df
@@ -49,6 +44,11 @@ def data_preparation(dataset_name):
 
 
 def feature_eng(ds_name):
+    """
+    :param ds_name: takes a csv file name as an input
+    :return: dataframe which includes new significant values
+    """
+
     #building path to dataset
     ds_name = 'stocks/' + ds_name
 
@@ -62,6 +62,7 @@ def feature_eng(ds_name):
     df['OBV'] = ta.volume.OnBalanceVolumeIndicator(close=df['Close'], volume=df['Volume']).on_balance_volume()
     # Take Profit
     df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
+
     # Simple Moving Average
     # 14 days
     df['sma14'] = ta.trend.sma_indicator(df['Close'], window=14)
@@ -85,10 +86,18 @@ def feature_eng(ds_name):
     df.drop('ema_12', axis=1, inplace=True)
     df.drop('ema_26', axis=1, inplace=True)
 
+    # drops na values (caused by values calculated over a window of time)
+    df = df.dropna()
+
+
     return df
 
 
 def feature_selection(X_train, y_train, X_test):
+    """
+    takes train and test groups as inputs
+    :return: the X groups (train and test) with only selected features, and name of the selected features
+    """
 
     # we'd prefer not to count banal columns
     columns_to_drop = ['Open', 'High', 'Low']
@@ -97,7 +106,7 @@ def feature_selection(X_train, y_train, X_test):
 
     model = LinearRegression()
 
-    # initializating rfe
+    # initializating rfe for feature selection
     rfe = RFE(model, n_features_to_select=5)
 
     # training and transforming
@@ -108,19 +117,19 @@ def feature_selection(X_train, y_train, X_test):
     rfe_feature_names = X_train.columns[rfe.support_]
 
 
-
     return X_train_selected, X_test_selected, rfe_feature_names
+
 
 
 
 def choose_model(X_train, y_train, X_test, y_test, ds_name):
     """return the best model for the data set, based on the MSE score"""
 
-    # picks between Linear Regression, Random Forest Regressor, Support Vector Machine
+    #picks between linear regressor, random forest, and k neighbors regressor
     models = {
         'Linear Regression': LinearRegression(),
         'Random Forest': RandomForestRegressor(),
-        'Support Vector Machine': SVR()
+        'K Neighbors Regressor' : KNeighborsRegressor(),
     }
 
     model = None
@@ -152,9 +161,13 @@ def choose_model(X_train, y_train, X_test, y_test, ds_name):
 
 
 def modelling(dataset):
+    """
+    function that trains the models
+    """
+
+    #performs feature engineering
     df = feature_eng(dataset)
-    # drops na values
-    df = df.dropna()
+
     # sets date as index
     df.set_index('Date', inplace=True)
 
@@ -217,6 +230,7 @@ def modelling(dataset):
     models_directory = 'models'
     os.makedirs(models_directory, exist_ok=True)
 
+    #saving models in a directory
     with open(f'{models_directory}/model_{dataset_name}.pkl', 'wb') as file:
         # dumps pre-trained model in the .pkl file
         pickle.dump(model, file)
