@@ -1,7 +1,7 @@
 
 from flask import Flask, render_template, request, redirect, url_for
 import csp_predictions
-
+from webbrowser import open
 app = Flask(__name__)
 
 
@@ -51,4 +51,5 @@ def final_output():
 
 
 if __name__ == '__main__':
+    open('http://localhost:5000/')
     app.run(debug=True)
