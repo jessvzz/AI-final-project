@@ -36,7 +36,7 @@ def handle_data():
         error_message = f"An error occurred: {str(e)}"
         return render_template('index.html', error_message=error_message)
 
-@app.route('/loading')
+
 
 
 
