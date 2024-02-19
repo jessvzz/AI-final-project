@@ -12,6 +12,7 @@ import os
 import numpy as np
 from sklearn.feature_selection import RFE
 from sklearn.ensemble import RandomForestRegressor
+import matplotlib.pyplot as plt
 
 
 def data_preparation(dataset_name):
@@ -82,9 +83,7 @@ def feature_eng(ds_name):
     df['ema_26'] = df['Close'].ewm(span=26, adjust=False).mean()
     # Calculating Moving Average Convergence-Divergence (MACD)
     df['macd'] = df['ema_12'] - df['ema_26']
-    # Dropping unnecessary columns
-    df.drop('ema_12', axis=1, inplace=True)
-    df.drop('ema_26', axis=1, inplace=True)
+
 
     # drops na values (caused by values calculated over a window of time)
     df = df.dropna()
@@ -120,7 +119,21 @@ def feature_selection(X_train, y_train, X_test):
     return X_train_selected, X_test_selected, rfe_feature_names
 
 
+def accuracy_scatter(y_test, y_pred, dataset_name):
+    """
+    :return: a scatter plot which illustrates how accurate are the predicted values
+    """
+    plt.figure(figsize=(8, 8))
+    plt.scatter(y_test, y_pred, alpha=0.5)
+    plt.title(f'Scatter Plot for  {dataset_name}')
+    plt.xlabel('Actual Values (y_test)')
+    plt.ylabel('Predicted Values (y_pred)')
+    plt.grid(True)
 
+    # Save scatter plot as an image file in the performance directory
+    performance_directory = 'performance'
+    save_path = os.path.join(performance_directory, f'{dataset_name}_accuracy_plot.png')
+    plt.savefig(save_path, format='png')
 
 def choose_model(X_train, y_train, X_test, y_test, ds_name):
     """return the best model for the data set, based on the MSE score"""
@@ -156,7 +169,7 @@ def choose_model(X_train, y_train, X_test, y_test, ds_name):
                 model = possible_model
                 # writes in the file which model was chosen
                 print(f"For the dataset {ds_name}, {name} was chosen.", file=file)
-
+        accuracy_scatter(y_test, y_pred, ds_name)
     return model
 
 

@@ -107,9 +107,10 @@ class Arc_Consistency(Displayable):
                 return self.solve_one(new_doms1, to_do) or self.solve_one(new_doms2, to_do)
 
     def solve_all(self, domains=None, to_do=None, solutions=None):
-        """Restituisce tutte le soluzioni al CSP o una lista vuota se non ce ne sono.
-        to_do è l'elenco degli archi da verificare.
-        solutions è la lista di soluzioni trovate fino a quel momento.
+        """
+        Returns all the solutions of the CSP or an empty list if there are none.
+        to_do is the list of the arcs that are yet to be verified.
+        solutions is the list of solutions found up until that moment
         """
         if solutions is None:
             solutions = []

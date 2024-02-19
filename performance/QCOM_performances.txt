@@ -1,6 +1,6 @@
 For the dataset QCOM, Linear Regression was chosen.
 STATISTICS:
-MSE: 0.717018077237302
-R²: 0.9990621872057127
-Residual Standard Deviation: 0.8467691995091118
-Average mse with cross validation: 2.5602785763558468e-20
+MSE: 0.711486471298663
+R²: 0.9990694221848393
+Residual Standard Deviation: 0.8434965745624952
+Average mse with cross validation: 3.840006800295034e-20

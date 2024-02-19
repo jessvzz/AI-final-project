@@ -1,6 +1,6 @@
 For the dataset AMD, Linear Regression was chosen.
 STATISTICS:
-MSE: 0.7461849871274909
-R²: 0.9992164062018557
-Residual Standard Deviation: 0.8638199969481437
-Average mse with cross validation: 2.0384886853301677e-23
+MSE: 0.8128050860798128
+R²: 0.999146446208997
+Residual Standard Deviation: 0.9015570342911273
+Average mse with cross validation: 2.0888606291576623e-23

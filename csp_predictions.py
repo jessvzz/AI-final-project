@@ -171,7 +171,7 @@ def data_visualization(solution):
         fig.add_trace(go.Scatter(x=df['Date'], y=df['High'], mode='lines', name=file_name.replace('.csv', ''), marker=dict(color=color)))
         colors.remove(color)
 
-        #for pie charts
+        #for pie chart and polar chart
         file_name = file_name.replace(".csv", "")
         assets.append(file_name)
         allocations.append(y)
@@ -305,6 +305,7 @@ def main(min_investment, max_investment, risk_factor):
         # Separate independent variables (X) from dependent variables (Y)
         X_train = train.drop('Close', axis=1)
         y_train = train['Close']
+        # We need the same features that the model has been trained on
         X_test = get_features(dataset_name, test)
 
 
