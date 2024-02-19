@@ -1,7 +1,6 @@
 
 from flask import Flask, render_template, request, redirect, url_for
 import csp_predictions
-from webbrowser import open
 app = Flask(__name__)
 
 
