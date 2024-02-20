@@ -1,3 +1,8 @@
+import warnings
+
+# suppresses warnings
+warnings.filterwarnings("ignore")
+
 import pandas as pd
 import ta
 from sklearn.neighbors import KNeighborsRegressor
@@ -11,7 +16,6 @@ import numpy as np
 from sklearn.feature_selection import RFE
 from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
-
 
 def data_preparation(dataset_name):
     """

@@ -1,3 +1,7 @@
+import warnings
+# Suppresses warnings
+warnings.filterwarnings("ignore")
+
 from datetime import timedelta
 import pandas as pd
 import numpy as np
@@ -7,7 +11,6 @@ import os
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import random
-import warnings
 from ml import feature_eng, data_preparation, modelling
 from CSP_generics import Variable, Constraint, CSP
 from CSP_solver import Arc_Consistency
@@ -252,9 +255,6 @@ def get_features(dataset, X):
 
 
 def main(min_investment, max_investment, risk_factor):
-    # Suppresses warnings
-    warnings.filterwarnings("ignore")
-
     # List of dataset names
     dataset_names = ["AMD", "CSCO", "QCOM", "SBUX", "TSLA"]
 
@@ -365,3 +365,4 @@ def main(min_investment, max_investment, risk_factor):
     # Returns None if no optimal solution is found
     return None
 
+#main(100, 500, 0.5)
