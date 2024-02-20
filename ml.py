@@ -171,6 +171,7 @@ def choose_model(X_train, y_train, X_test, y_test, ds_name):
                 model = possible_model
                 # writes in the file which model was chosen
                 print(f"For the dataset {ds_name}, {name} was chosen.", file=file)
+        #draws accuracy scatter for selected model
         accuracy_scatter(y_test, y_pred, ds_name)
     return model
 

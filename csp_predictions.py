@@ -11,6 +11,7 @@ import os
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import random
+
 from ml import feature_eng, data_preparation, modelling
 from CSP_generics import Variable, Constraint, CSP
 from CSP_solver import Arc_Consistency
@@ -38,11 +39,11 @@ def calculate_volatility(datasets):
         daily_volatility = statistics.stdev(df['Daily Return'].dropna())
 
         # annualize daily volatility using 365 days
-        annualized_daily_volatility_calendar_days = daily_volatility * np.sqrt(365)
-        annualized_daily_volatility_calendar_days = round(annualized_daily_volatility_calendar_days, 2)
+        annualized_daily_volatility = daily_volatility * np.sqrt(365)
+        annualized_daily_volatility= round(annualized_daily_volatility, 2)
 
         # storing the result in the dictionary
-        volatilities[dataset] = annualized_daily_volatility_calendar_days
+        volatilities[dataset] = annualized_daily_volatility
 
     return volatilities
 
