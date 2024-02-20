@@ -1,4 +1,3 @@
-import shutil
 from datetime import timedelta
 import pandas as pd
 import numpy as np
@@ -147,9 +146,6 @@ def load_model(dataset_name):
 
 def data_visualization(solution):
     # clears static directory and recreates it, so the files are not 'written over'
-    """    if os.path.exists('static'):
-        shutil.rmtree('static')
-    os.makedirs('static', exist_ok=True)"""
 
     #colors for time series
     colors = ['#6f3cff', '#fca778', '#c2bcff', '#7f50ff', '#af9cff', '#ffc282']
@@ -183,6 +179,7 @@ def data_visualization(solution):
                       yaxis_title='Price',
                       plot_bgcolor='#ffffff')
 
+    # saves graph
     if os.path.exists("static/time_series_plot_interactive.html"):
         os.remove("static/time_series_plot_interactive.html")
     fig.write_html("static/time_series_plot_interactive.html")
@@ -193,7 +190,7 @@ def data_visualization(solution):
     plt.pie(allocations, colors=colors, labels=assets)
     plt.axis('equal')
 
-    # saves pie chart as an image file
+    # saves pie chart
     if os.path.exists("static/piegraph.jpg"):
         os.remove("static/piegraph.jpg")
     plt.savefig("static/piegraph.jpg", dpi=300)
@@ -216,7 +213,7 @@ def data_visualization(solution):
     plt.legend(labels=('Allocations',), loc=1)
     plt.title("Asset Allocations")
 
-    # Saves polar chart as an image file
+    # saves polar chart
     if os.path.exists("static/polargraph.jpg"):
         os.remove("static/polargraph.jpg")
     plt.savefig("static/polargraph.jpg", dpi=300)

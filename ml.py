@@ -1,11 +1,9 @@
 import pandas as pd
 import ta
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neural_network import MLPRegressor
 from ta.momentum import RSIIndicator
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.linear_model import LinearRegression
-from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error, r2_score
 import pickle
 import os
@@ -27,7 +25,7 @@ def data_preparation(dataset_name):
     # converting dates in yyyy-mm-dd format
     df['Date'] = pd.to_datetime(df['Date'])
 
-    # renamed the column for a pure personal preference
+    # renamed the column
     df.rename(columns={'Close/Last': 'Close'}, inplace=True)
 
     # converted to purely numeric values
@@ -130,13 +128,13 @@ def accuracy_scatter(y_test, y_pred, dataset_name):
     plt.ylabel('Predicted Values (y_pred)')
     plt.grid(True)
 
-    # Save scatter plot as an image file in the performance directory
+    # Saves scatter plot in the performance directory
     performance_directory = 'performance'
     save_path = os.path.join(performance_directory, f'{dataset_name}_accuracy_plot.png')
     plt.savefig(save_path, format='png')
 
 def choose_model(X_train, y_train, X_test, y_test, ds_name):
-    """return the best model for the data set, based on the MSE score"""
+    """returns the best model for the data set, based on the MSE score"""
 
     #picks between linear regressor, random forest, and k neighbors regressor
     models = {

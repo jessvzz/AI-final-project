@@ -112,25 +112,41 @@ class Arc_Consistency(Displayable):
         to_do is the list of the arcs that are yet to be verified.
         solutions is the list of solutions found up until that moment
         """
+        # initializes solutions list if not provided
         if solutions is None:
             solutions = []
 
+        # makes domains arc-consistent
         new_domains = self.make_arc_consistent(domains, to_do)
+
+        # checks if any variable has an empty domain
         if any(len(new_domains[var]) == 0 for var in new_domains):
+            #there are no more solutions, thus we return
             return solutions
+
+        # checks if all variables have a single value in their domain
         elif all(len(new_domains[var]) == 1 for var in new_domains):
+            # we can add a new solution
             solution = {var: select(new_domains[var]) for var in new_domains}
             self.display(2, "solution:", solution)
             solutions.append(solution)
         else:
+            # seclects a variable with more than one value in its domain
             var = self.select_var(x for x in self.csp.variables if len(new_domains[x]) > 1)
             if var:
+                # splits the domain in two parts
                 dom1, dom2 = partition_domain(new_domains[var])
                 self.display(3, "...splitting", var, "into", dom1, "and", dom2)
+
+                # creates new domain assignments for the two split domains
                 new_doms1 = copy_with_assign(new_domains, var, dom1)
                 new_doms2 = copy_with_assign(new_domains, var, dom2)
+
+                # prep to_do list for further verification
                 to_do = self.new_to_do(var, None)
                 self.display(3, " adding", to_do if to_do else "nothing", "to to_do.")
+
+                #solves recursively for each of the split domains
                 self.solve_all(new_doms1, to_do, solutions)
                 self.solve_all(new_doms2, to_do, solutions)
 
