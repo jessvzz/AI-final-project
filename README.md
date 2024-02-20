@@ -4,7 +4,7 @@ Before running the program for the first time, ensure that all required librarie
 
 ```bash
 pip install -r requirements.txt
-
+```
 Additionally, make sure the "models" directory contains the necessary pre-trained models. If not, execute ml.py.
 
 This step is crucial for optimizing subsequent executions.
