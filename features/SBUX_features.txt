@@ -1,5 +1,5 @@
+RSI
 TP
 sma14
 ema_12
-ema_26
 macd

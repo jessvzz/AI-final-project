@@ -1,5 +1,7 @@
 import warnings
 
+from sklearn.preprocessing import MinMaxScaler
+
 # suppresses warnings
 warnings.filterwarnings("ignore")
 
@@ -89,7 +91,10 @@ def feature_eng(ds_name):
 
     # drops na values (caused by values calculated over a window of time)
     df = df.dropna()
-
+    #scaling columns
+    scaler = MinMaxScaler()
+    numerical_cols = ['Close', 'Volume', 'RSI', 'OBV', 'TP', 'sma14', 'sma30', 'sma100', 'mad', 'CCI', 'ema_12', 'ema_26', 'macd' ]
+    df[numerical_cols] = scaler.fit_transform(df[numerical_cols])
 
     return df
 
@@ -190,6 +195,8 @@ def modelling(dataset):
     # close price is target value
     X = df.drop('Close', axis=1)
     Y = df['Close']
+
+
 
     # splitting dataset for feature selection
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)

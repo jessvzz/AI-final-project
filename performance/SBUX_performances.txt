@@ -1,6 +1,6 @@
 For the dataset SBUX, Linear Regression was chosen.
 STATISTICS:
-MSE: 0.21314719074488495
-R²: 0.9987828637309117
-Residual Standard Deviation: 0.46167866611408953
-Average mse with cross validation: 5.2831708838053343e-20
+MSE: 3.7610163824665836e-05
+R²: 0.9989557508113011
+Residual Standard Deviation: 0.006132712599222781
+Average mse with cross validation: 6.254039102719974e-31
