@@ -2,7 +2,7 @@ import warnings
 # Suppresses warnings
 warnings.filterwarnings("ignore")
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 import pandas as pd
 import numpy as np
 import statistics
@@ -292,17 +292,22 @@ def main(min_investment, max_investment, risk_factor):
         # Feature engineering
         df = feature_eng(dataset)
         df['Date'] = pd.to_datetime(df['Date'])
+        # Shifts 'Close' column downward by one row
+        df['Close_next'] = df['Close'].shift(-1)
+
         df = df.dropna()
         df.set_index('Date', inplace=True)
 
-        # Splits the dataset into training and test sets
-        split_date = df.index.max() - timedelta(days=365)
+
+        split_date = datetime(2023, 1, 1)
+
+        # Split the dataset
         train = df[df.index <= split_date]
         test = df[df.index > split_date]
 
         # Separate independent variables (X) from dependent variables (Y)
-        X_train = train.drop('Close', axis=1)
-        y_train = train['Close']
+        X_train = train.drop('Close_next', axis=1)
+        y_train = train['Close_next']
         # We need the same features that the model has been trained on
         X_test = get_features(dataset_name, test)
 
@@ -366,4 +371,5 @@ def main(min_investment, max_investment, risk_factor):
     # Returns None if no optimal solution is found
     return None
 
+#test
 #main(100, 500, 0.5)

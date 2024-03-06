@@ -1,5 +1,5 @@
-RSI
+Close
 TP
 sma14
-ema_12
-macd
+sma30
+ema_26

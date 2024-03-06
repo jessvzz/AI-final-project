@@ -1,4 +1,5 @@
 import warnings
+from datetime import datetime
 
 from sklearn.preprocessing import MinMaxScaler
 
@@ -105,11 +106,6 @@ def feature_selection(X_train, y_train, X_test):
     :return: the X groups (train and test) with only selected features, and name of the selected features
     """
 
-    # we'd prefer not to count banal columns
-    columns_to_drop = ['Open', 'High', 'Low']
-    X_train = X_train.drop(columns=columns_to_drop, errors='ignore')
-    X_test = X_test.drop(columns=columns_to_drop, errors='ignore')
-
     model = LinearRegression()
 
     # initializating rfe for feature selection
@@ -189,17 +185,32 @@ def modelling(dataset):
     #performs feature engineering
     df = feature_eng(dataset)
 
+    # Shifts 'Close' column downward by one row
+    df['Close_next'] = df['Close'].shift(-1)
+
+    # Drops the last row which now contains NaN for 'Close_next'
+    df = df.dropna()
+
     # sets date as index
     df.set_index('Date', inplace=True)
 
-    # close price is target value
-    X = df.drop('Close', axis=1)
-    Y = df['Close']
+    split_date = datetime(2023, 1, 1)
+
+    # Splits the dataset
+    train = df[df.index <= split_date]
+    test = df[df.index > split_date]
+
+    X = df.drop('Close_next', axis=1)
+    Y = df['Close_next']
+
+    # Separate independent variables (X) from dependent variables (Y)
+    X_train = train.drop('Close_next', axis=1)
+    y_train = train['Close_next']
+    # We need the same features that the model has been trained on
+    X_test = test.drop('Close_next', axis=1)
+    y_test = test['Close_next']
 
 
-
-    # splitting dataset for feature selection
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
     #performs feature selection
     X_train, X_test, features = feature_selection(X_train, y_train, X_test)
@@ -214,7 +225,7 @@ def modelling(dataset):
 
 
     # splitting train group for cross validation
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42, shuffle=False)
 
     # needed dataset names without extensions to name .pkl and .txt files
     dataset_name = os.path.splitext(dataset)[0]

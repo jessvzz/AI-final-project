@@ -1,5 +1,5 @@
+Close
 TP
 sma14
-ema_12
+sma30
 ema_26
-macd
